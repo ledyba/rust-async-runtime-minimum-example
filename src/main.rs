@@ -13,7 +13,9 @@ fn main() -> Result<(), anyhow::Error> {
     let beg = Instant::now();
     mirai::task::sleep(Duration::from_millis(10)).await;
     let end = Instant::now();
-    (end - beg).as_millis()
+    let elapsed = (end - beg).as_millis();
+    assert_eq!(elapsed, 10);
+    elapsed
   });
   info!("Result: {}", r);
   Ok(())
