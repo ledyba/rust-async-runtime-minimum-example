@@ -6,3 +6,6 @@ Minimum async runtime example for learning.
 
 See [src/mirai/runtime.rs](src/mirai/runtime.rs).
 
+# Reference
+
+ - [Tutorial | Tokio - An asynchronous Rust runtime](https://tokio.rs/tokio/tutorial)
