@@ -1,7 +1,7 @@
 use std::future::{Future};
 use std::task::{Context, Poll, Waker};
 use std::fmt::Debug;
-use log::{debug, info};
+use log::info;
 
 pub struct Runtime {
 }

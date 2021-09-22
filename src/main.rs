@@ -1,4 +1,4 @@
-use log::{error, info};
+use log::info;
 
 pub mod runtime;
 
@@ -11,6 +11,6 @@ fn main() -> Result<(), anyhow::Error> {
     let k = async { 1 };
     10 + k.await
   });
-  println!("Result: {}", r);
+  info!("Result: {}", r);
   Ok(())
 }
