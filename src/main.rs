@@ -1,3 +1,5 @@
+use std::time::{Duration, Instant};
+
 use log::info;
 
 pub mod mirai;
@@ -8,8 +10,10 @@ fn main() -> Result<(), anyhow::Error> {
       .default_filter_or("info"));
   let mut rt = mirai::runtime::new();
   let r = rt.block_on(async {
-    let k = async { 1 };
-    10 + k.await
+    let beg = Instant::now();
+    mirai::task::sleep(Duration::from_millis(10)).await;
+    let end = Instant::now();
+    (end - beg).as_millis()
   });
   info!("Result: {}", r);
   Ok(())
