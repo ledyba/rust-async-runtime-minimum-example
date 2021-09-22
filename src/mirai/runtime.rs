@@ -3,7 +3,7 @@ use std::pin::Pin;
 use std::future::Future;
 use std::task::{Context, Poll, Waker};
 
-use log::info;
+use log::trace;
 
 pub fn new() -> Runtime {
   Runtime {
@@ -26,11 +26,11 @@ impl Runtime {
       let r = b.as_mut().poll(&mut context);
       match r {
         Poll::Pending => {
-          info!("Pending");
+          trace!("Pending");
           continue;
         }
         Poll::Ready(r) => {
-          info!("Ready: {:?}", r);
+          trace!("Ready: {:?}", r);
           return r;
         }
       }

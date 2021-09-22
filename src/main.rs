@@ -7,7 +7,7 @@ pub mod mirai;
 fn main() -> Result<(), anyhow::Error> {
   env_logger::init_from_env(
     env_logger::Env::from(env_logger::Env::default())
-      .default_filter_or("info"));
+      .default_filter_or("trace"));
   let mut rt = mirai::runtime::new();
   let r = rt.block_on(async {
     let beg = Instant::now();
