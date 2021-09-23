@@ -19,7 +19,7 @@ impl Runtime {
       F: Future<Output=R> + Send,
       R: Debug,
   {
-    let waker: Waker = futures::task::noop_waker();
+    let waker = super::waker::Waker::new();
     let mut context:Context = Context::from_waker(&waker);
     let mut b: Pin<Box<F>> = Box::pin(f);
     loop {
