@@ -20,7 +20,7 @@ impl Runtime {
       F: Future<Output=R> + Send,
       R: Debug,
   {
-    let mutex = Arc::new(Mutex::new(false));
+    let mutex = Arc::new(Mutex::new(()));
     let condvar = Arc::new(Condvar::new());
     let waker = super::waker::Waker::new(mutex.clone(), condvar.clone());
     let mut context:Context = Context::from_waker(&waker);

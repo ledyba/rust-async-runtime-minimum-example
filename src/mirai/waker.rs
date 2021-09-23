@@ -2,18 +2,18 @@ use std::sync::{Arc, Condvar, Mutex};
 
 #[derive(Clone)]
 pub struct Waker {
-  mutex: Arc<Mutex<bool>>,
+  mutex: Arc<Mutex<()>>,
   condvar: std::sync::Arc<std::sync::Condvar>,
 }
 
 impl Waker {
-  fn new_self(mutex: Arc<Mutex<bool>>, condvar: Arc<Condvar>) -> Self {
+  fn new_self(mutex: Arc<Mutex<()>>, condvar: Arc<Condvar>) -> Self {
     Waker{
       mutex,
       condvar,
     }
   }
-  pub fn new(mutex: Arc<Mutex<bool>>, condvar: Arc<Condvar>) -> std::task::Waker {
+  pub fn new(mutex: Arc<Mutex<()>>, condvar: Arc<Condvar>) -> std::task::Waker {
     unsafe {
       std::task::Waker::from_raw(Waker::new_self(mutex, condvar).into_raw())
     }
@@ -37,7 +37,7 @@ mod internal {
   unsafe fn wake(p: *const ()) {
     let waker = &mut *(p.cast::<Waker>() as *mut Waker);
     {
-      waker.mutex.lock().unwrap();
+      let _ = waker.mutex.lock().unwrap();
       waker.condvar.notify_one();
     }
     drop(p);
@@ -45,7 +45,7 @@ mod internal {
   unsafe fn wake_by_ref(p: *const ()) {
     let waker = &mut *(p.cast::<Waker>() as *mut Waker);
     {
-      waker.mutex.lock().unwrap();
+      let _ = waker.mutex.lock().unwrap();
       waker.condvar.notify_one();
     }
   }
