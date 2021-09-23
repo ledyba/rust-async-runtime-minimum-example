@@ -1,5 +1,7 @@
 use std::sync::{Arc, Condvar, Mutex};
 
+use log::trace;
+
 #[derive(Clone)]
 pub struct Waker {
   mutex: Arc<Mutex<()>>,
@@ -19,8 +21,10 @@ impl Waker {
     }
   }
   fn into_raw(self) -> std::task::RawWaker {
+    let b = Box::into_raw(Box::new(self)).cast::<()>();
+    trace!("Created: {:?}", b as *mut u8);
     std::task::RawWaker::new(
-      Box::into_raw(Box::new(self)).cast::<()>(),
+      b,
       internal::get_vtable(),
     )
   }
@@ -28,7 +32,7 @@ impl Waker {
 
 mod internal {
   use std::alloc::dealloc;
-
+  use log::trace;
   use super::Waker;
   unsafe fn clone(p: *const ()) -> std::task::RawWaker {
     let waker = &mut *(p.cast::<Waker>() as *mut Waker);
@@ -54,6 +58,7 @@ mod internal {
     let ptr = p as *mut Waker;
     std::ptr::drop_in_place(ptr);
     dealloc(p as *mut u8, std::alloc::Layout::new::<Waker>());
+    trace!("Dropped: {:?}", p as *mut u8);
   }
   pub fn get_vtable() -> &'static std::task::RawWakerVTable {
     static VTABLE: once_cell::sync::OnceCell<std::task::RawWakerVTable> = once_cell::sync::OnceCell::new();
