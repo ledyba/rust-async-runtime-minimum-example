@@ -1,6 +1,7 @@
-use std::{task::Poll, time::{Duration, Instant}};
+use std::{task::Poll, thread, time::{Duration, Instant}};
 
 use futures::Future;
+use log::trace;
 pub fn sleep(duration: Duration) -> Sleep {
   Sleep::new(duration)
 }
@@ -31,7 +32,14 @@ impl Future for Sleep {
     if self.has_passed() {
       Poll::Ready(())
     } else {
-      cx.waker().wake_by_ref();
+      let waker = cx.waker().clone();
+      let deadline = self.deadline;
+      thread::spawn(move || {
+        let duration = deadline - Instant::now();
+        trace!("Duration: {}ms", duration.as_millis());
+        thread::sleep(duration);
+        waker.wake_by_ref();
+      });
       Poll::Pending
     }
   }

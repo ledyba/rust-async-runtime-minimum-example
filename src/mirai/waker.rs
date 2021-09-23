@@ -1,31 +1,28 @@
-pub struct Waker {
-  condvar: std::sync::Condvar,
-}
+use std::sync::{Arc, Condvar, Mutex};
 
-impl Clone for Waker {
-  fn clone(&self) -> Self {
-    Self {
-      condvar: std::sync::Condvar::new(),
-    }
-  }
+#[derive(Clone)]
+pub struct Waker {
+  mutex: Arc<Mutex<bool>>,
+  condvar: std::sync::Arc<std::sync::Condvar>,
 }
 
 impl Waker {
-  fn from_raw(self) -> std::task::RawWaker {
+  fn new_self(mutex: Arc<Mutex<bool>>, condvar: Arc<Condvar>) -> Self {
+    Waker{
+      mutex,
+      condvar,
+    }
+  }
+  pub fn new(mutex: Arc<Mutex<bool>>, condvar: Arc<Condvar>) -> std::task::Waker {
+    unsafe {
+      std::task::Waker::from_raw(Waker::new_self(mutex, condvar).into_raw())
+    }
+  }
+  fn into_raw(self) -> std::task::RawWaker {
     std::task::RawWaker::new(
       Box::into_raw(Box::new(self)).cast::<()>(),
       internal::get_vtable(),
     )
-  }
-  fn new_raw() -> std::task::RawWaker {
-    Waker::from_raw(Waker{
-      condvar: std::sync::Condvar::new(),
-    })
-  }
-  pub fn new() -> std::task::Waker {
-    unsafe {
-      std::task::Waker::from_raw(Waker::new_raw())
-    }
   }
 }
 
@@ -35,16 +32,22 @@ mod internal {
   use super::Waker;
   unsafe fn clone(p: *const ()) -> std::task::RawWaker {
     let waker = &mut *(p.cast::<Waker>() as *mut Waker);
-    Waker::from_raw(waker.clone())
+    waker.clone().into_raw()
   }
   unsafe fn wake(p: *const ()) {
     let waker = &mut *(p.cast::<Waker>() as *mut Waker);
-    waker.condvar.notify_one();
+    {
+      waker.mutex.lock().unwrap();
+      waker.condvar.notify_one();
+    }
     drop(p);
   }
   unsafe fn wake_by_ref(p: *const ()) {
     let waker = &mut *(p.cast::<Waker>() as *mut Waker);
-    waker.condvar.notify_one();
+    {
+      waker.mutex.lock().unwrap();
+      waker.condvar.notify_one();
+    }
   }
   unsafe fn drop(p: *const ()) {
     let p = p.cast::<Waker>();
