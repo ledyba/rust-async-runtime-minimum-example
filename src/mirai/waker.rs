@@ -1,4 +1,4 @@
-use std::sync::{Arc, Condvar, Mutex, mpsc::SyncSender};
+use std::sync::mpsc::SyncSender;
 
 use log::trace;
 
@@ -38,16 +38,12 @@ mod internal {
   }
   unsafe fn wake(p: *const ()) {
     let waker = &mut *(p.cast::<Waker>() as *mut Waker);
-    {
-      waker.sender.send(());
-    }
+    waker.sender.send(()).expect("Failed to wake.");
     drop(p);
   }
   unsafe fn wake_by_ref(p: *const ()) {
     let waker = &mut *(p.cast::<Waker>() as *mut Waker);
-    {
-      waker.sender.send(());
-    }
+    waker.sender.send(()).expect("Failed to wake.");
   }
   unsafe fn drop(p: *const ()) {
     let p = p.cast::<Waker>();
