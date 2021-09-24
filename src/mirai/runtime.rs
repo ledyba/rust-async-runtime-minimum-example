@@ -1,17 +1,22 @@
 use std::fmt::Debug;
 use std::pin::Pin;
 use std::future::Future;
-use std::sync::{Mutex, Arc, Condvar};
+use std::sync::mpsc::{SyncSender, Receiver};
 use std::task::{Context, Poll};
 
 use log::trace;
 
 pub fn new() -> Runtime {
+  let (sender, receiver) = std::sync::mpsc::sync_channel::<()>(10);
   Runtime {
+    sender,
+    receiver,
   }
 }
 
 pub struct Runtime {
+  sender: SyncSender<()>,
+  receiver: Receiver<()>,
 }
 
 impl Runtime {
@@ -20,9 +25,7 @@ impl Runtime {
       F: Future<Output=R> + Send,
       R: Debug,
   {
-    let mutex = Arc::new(Mutex::new(()));
-    let condvar = Arc::new(Condvar::new());
-    let waker = super::waker::Waker::new(mutex.clone(), condvar.clone());
+    let waker = super::waker::Waker::new(self.sender.clone());
     let mut context:Context = Context::from_waker(&waker);
     let mut b: Pin<Box<F>> = Box::pin(f);
     loop {
@@ -30,7 +33,7 @@ impl Runtime {
       match r {
         Poll::Pending => {
           trace!("Pending");
-          let _ = condvar.wait(mutex.lock().unwrap()).unwrap();
+          let _ = self.receiver.recv();
           continue;
         }
         Poll::Ready(r) => {

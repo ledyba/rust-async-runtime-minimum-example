@@ -1,23 +1,21 @@
-use std::sync::{Arc, Condvar, Mutex};
+use std::sync::{Arc, Condvar, Mutex, mpsc::SyncSender};
 
 use log::trace;
 
 #[derive(Clone)]
 pub struct Waker {
-  mutex: Arc<Mutex<()>>,
-  condvar: std::sync::Arc<std::sync::Condvar>,
+  sender: SyncSender<()>,
 }
 
 impl Waker {
-  fn new_self(mutex: Arc<Mutex<()>>, condvar: Arc<Condvar>) -> Self {
+  fn new_self(sender: SyncSender<()>) -> Self {
     Waker{
-      mutex,
-      condvar,
+      sender,
     }
   }
-  pub fn new(mutex: Arc<Mutex<()>>, condvar: Arc<Condvar>) -> std::task::Waker {
+  pub fn new(sender: SyncSender<()>) -> std::task::Waker {
     unsafe {
-      std::task::Waker::from_raw(Waker::new_self(mutex, condvar).into_raw())
+      std::task::Waker::from_raw(Waker::new_self(sender).into_raw())
     }
   }
   fn into_raw(self) -> std::task::RawWaker {
@@ -41,16 +39,14 @@ mod internal {
   unsafe fn wake(p: *const ()) {
     let waker = &mut *(p.cast::<Waker>() as *mut Waker);
     {
-      let _ = waker.mutex.lock().unwrap();
-      waker.condvar.notify_one();
+      waker.sender.send(());
     }
     drop(p);
   }
   unsafe fn wake_by_ref(p: *const ()) {
     let waker = &mut *(p.cast::<Waker>() as *mut Waker);
     {
-      let _ = waker.mutex.lock().unwrap();
-      waker.condvar.notify_one();
+      waker.sender.send(());
     }
   }
   unsafe fn drop(p: *const ()) {
