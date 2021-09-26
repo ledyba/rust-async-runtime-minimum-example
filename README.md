@@ -6,7 +6,11 @@ Minimum async runtime example for learning.
 
 See [src/mirai/runtime.rs](src/mirai/runtime.rs).
 
-## Sample code to use this runtime
+### `Sleep` task example
+
+See [src/mirai/task/sleep.rs](src/mirai/task/sleep.rs).
+
+## Sample code to use this runtime with `Sleep` task
 
 See [src/main.rs](src/main.rs).
 
