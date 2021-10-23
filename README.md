@@ -1,6 +1,6 @@
 # Rust Minimum Async Runtime example.
 
-Minimum async runtime example for learning. 
+Minimum async runtime example, `mirai` runtime. Developed for learning purpose.
 
 ## Runtime
 
